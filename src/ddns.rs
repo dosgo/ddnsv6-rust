@@ -3,11 +3,9 @@ pub mod dnspod;
 pub mod iptool;
 
 use std::{thread, time};
-use trust_dns_resolver::config::*;
-use trust_dns_resolver::Resolver;
+use dns_lookup::{lookup_host};
 pub fn checkip(iptype: String, caddr: String, domain: String) -> bool {
-    let resolver = Resolver::new(ResolverConfig::default(), ResolverOpts::default()).unwrap();
-    let _response = resolver.lookup_ip(domain.as_str());
+    let _response =lookup_host(domain.as_str()) ;
     match _response {
         Ok(response) => {
             for ans in response.iter() {
@@ -29,6 +27,7 @@ pub fn checkip(iptype: String, caddr: String, domain: String) -> bool {
     }
     return false;
 }
+
 
 fn modify(
     email: String,

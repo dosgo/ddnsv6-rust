@@ -4,7 +4,7 @@ use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "basic")]
-struct Opt {
+struct Param {
     // A flag, true if used in the command line. Note doc comment will
     // be used for the help message of the flag. The name of the
     // argument will be, by default, based on the name of the field.
@@ -39,10 +39,9 @@ struct Opt {
 }
 
 fn main() {
-    let opt = Opt::from_args();
-    println!("ddnsv6 v1.2");
-    println!("param:{:#?}", opt);
-
+    let opt = Param::from_args();
+    println!("ddnsv6 v1.3");
+    println!("{:?}", opt);
     if opt.domain == "" {
         println!("domain Not allowed to be empty!");
         return;
