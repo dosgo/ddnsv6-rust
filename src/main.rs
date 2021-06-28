@@ -1,69 +1,98 @@
 mod ddns;
-//use async_std::task;
-use structopt::StructOpt;
-
-#[derive(StructOpt, Debug)]
-#[structopt(name = "basic")]
-struct Param {
-    // A flag, true if used in the command line. Note doc comment will
-    // be used for the help message of the flag. The name of the
-    // argument will be, by default, based on the name of the field.
-    /// Activate debug mode
-    #[structopt(short, long,default_value = "")]
-    token: String,
-
-    // The number of occurrences of the `v/verbose` flag
-    /// Verbose mode (-v, -vv, -vvv, etc.)
-    #[structopt( long, default_value = "")]
-    domain: String,
-
-    #[structopt(short, long, default_value = "www")]
-    subdomain: String,
-
-    #[structopt(short, long, default_value = "6")]
-    iptype: String,
-
-    #[structopt( long, default_value = "cloudflare")]
-    ddnstype: String,
-
-
-    #[structopt(short, long, default_value = "")]
-    email: String,
-
-    #[structopt(short, long, default_value = "")]
-    apikey: String,
-
-    #[structopt(short, long, default_value = "")]
-    zoneid: String,
-    
-}
+use getopts::Options;
+use std::env;
 
 fn main() {
-    let opt = Param::from_args();
     println!("ddnsv6 v1.3");
-    println!("{:?}", opt);
-    if opt.domain == "" {
+    let args: Vec<String> = env::args().collect();
+    let mut opts = Options::new();
+    opts.optopt("D", "ddnstype", "ddnstype [dnspod cloudflare]", "");
+    opts.optopt("i", "iptype", "iptype [4,6]", "");
+    opts.optopt("d", "domain", "domain", "");
+    opts.optopt("s", "subdomain", "subdomain", "");
+
+    opts.optopt("t", "token", "ddns token ", "");
+    opts.optopt("e", "email", "cloudflare email", "");
+    opts.optopt("a", "apikey", "cloudflare apikey", "");
+    opts.optopt("z", "zoneid", "cloudflare zoneid", "");
+
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(f) => {
+            panic!(f.to_string())
+        }
+    };
+    let mut ddnstype: String = "cloudflare".to_string();
+    if matches.opt_present("D") {
+        ddnstype = matches.opt_str("ddnstype").unwrap();
+    }
+    let mut iptype: String = "6".to_string();
+    if matches.opt_present("i") {
+        iptype = matches.opt_str("iptype").unwrap();
+    }
+
+    let mut domain: String = "".to_string();
+    if matches.opt_present("d") {
+        domain = matches.opt_str("domain").unwrap();
+    }
+
+    let mut subdomain: String = "www".to_string();
+    if matches.opt_present("s") {
+        subdomain = matches.opt_str("subdomain").unwrap();
+    }
+
+    let mut token: String = "".to_string();
+    if matches.opt_present("t") {
+        token = matches.opt_str("token").unwrap();
+    }
+
+    let mut email: String = "".to_string();
+    if matches.opt_present("e") {
+        email = matches.opt_str("email").unwrap();
+    }
+
+    let mut apikey: String = "".to_string();
+    if matches.opt_present("a") {
+        apikey = matches.opt_str("apikey").unwrap();
+    }
+
+    let mut zoneid: String = "".to_string();
+    if matches.opt_present("z") {
+        zoneid = matches.opt_str("zoneid").unwrap();
+    }
+    println!("ddnstype:{:}", ddnstype);
+    println!("iptype:{:}", iptype);
+    println!("domain:{:}", domain);
+    println!("subdomain:{:}", subdomain);
+    if ddnstype == "dnspod" {
+        println!("token:{:}", token);
+    } else {
+        println!("email:{:}", email);
+        println!("apikey:{:}", apikey);
+        println!("zoneid:{:}", zoneid);
+    }
+    if domain == "" {
         println!("domain Not allowed to be empty!");
         return;
     }
 
-    if opt.ddnstype == "cloudflare" && (opt.email == "" || opt.apikey == "" || opt.zoneid == "") {
+    if ddnstype == "cloudflare" && (email == "" || apikey == "" || zoneid == "") {
         println!("Using cloudflare requires email apikey zoneid parameter ");
         return;
     }
-    if opt.ddnstype == "ddns" && opt.token == "" {
+    if ddnstype == "ddns" && token == "" {
         println!("Using cloudflare requires token parameter ");
         return;
     }
 
     ddns::start_ddns_check(
-        opt.ddnstype.to_string(),
-        opt.iptype.to_string(),
-        opt.domain.to_string(),
-        opt.subdomain.to_string(),
-        opt.token.to_string(),
-        opt.email.to_string(),
-        opt.apikey.to_string(),
-        opt.zoneid.to_string(),
+        ddnstype.to_string(),
+        iptype.to_string(),
+        domain.to_string(),
+        subdomain.to_string(),
+        token.to_string(),
+        email.to_string(),
+        apikey.to_string(),
+        zoneid.to_string(),
     );
 }

@@ -1,4 +1,3 @@
-use cidr_utils::cidr::IpCidr;
 use std::net::IpAddr;
 /*
 *获取本机公网IP
@@ -15,7 +14,7 @@ pub fn get_public_ip(ipver: String) -> String {
         if ipver == "4" && iface.addr.ip().is_ipv6() {
             continue;
         }
-        if IsPublicIP(iface.addr.ip()) {
+        if IsPublicIPV1(iface.addr.ip()) {
             return iface.addr.ip().to_string();
         }
         println!("{:#?}", iface.addr.ip());
@@ -24,30 +23,40 @@ pub fn get_public_ip(ipver: String) -> String {
     return "".to_string();
 }
 
-fn isPrivateIPv4(ip: IpAddr) -> bool {
-    let cidr1 = IpCidr::from_str("10.0.0.0/8").unwrap();
-    let cidr2 = IpCidr::from_str("172.16.0.0/12").unwrap();
-    let cidr3 = IpCidr::from_str("192.168.0.0/16").unwrap();
-    return cidr1.contains(ip) || cidr2.contains(ip) || cidr3.contains(ip);
-}
-
-fn isPrivateIPv6(ip: IpAddr) -> bool {
-    let cidr1 = IpCidr::from_str("fc00::/7").unwrap();
-    return cidr1.contains(ip);
-}
-
 //IsPublicIP 判断是否公网IP,支持IPv4,IPv6
-fn IsPublicIP(ip: IpAddr) -> bool {
+pub fn IsPublicIPV1(ip: IpAddr) -> bool {
     // IPv4私有地址空间
     // A类：10.0.0.0到10.255.255.255
     // B类：172.16.0.0到172.31.255.255
     // C类：192.168.0.0到192.168.255.255
     if ip.is_ipv4() {
-        return !isPrivateIPv4(ip);
+        let _ip = ip.to_string();
+        let ip = &_ip[..];
+        let split = _ip.split(".");
+        let ips: Vec<&str> = split.clone().collect();
+
+        if ip.starts_with("10.") {
+            return false;
+        }
+        if ip.starts_with("172.") {
+            if split.count() > 1 {
+                let ipTwo = ips[1].parse::<i32>().unwrap(); //String to int
+                if ipTwo >= 16 && ipTwo <= 31 {
+                    return false;
+                }
+            }
+        }
+        if ip.starts_with("192.168") {
+            return false;
+        }
     }
     // IPv6私有地址空间：以前缀FEC0::/10开头
     if ip.is_ipv6() {
-        return !isPrivateIPv6(ip);
+        let _ip = ip.to_string().to_ascii_lowercase();
+        let ip = &_ip[..];
+        if ip.starts_with("fec0") {
+            return false;
+        }
     }
-    return false;
+    return true;
 }
