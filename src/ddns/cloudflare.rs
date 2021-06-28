@@ -1,4 +1,4 @@
-use reqwest::header::HeaderMap;
+
 use serde_json::Number;
 use serde_json::Value;
 use std::collections::HashMap;
@@ -19,71 +19,41 @@ impl CloudFlare {
             zoneid: _zoneid,
         }
     }
-    /*异步请求*/
-    async fn async_post(
+
+   
+    /*同步请求*/
+    fn postv1(
         &self,
         cmd: String,
         params: HashMap<String, Value>,
-    ) -> Result<HashMap<String, Value>, reqwest::Error> {
+    ) -> Result<HashMap<String, Value>, minreq::Error> {
         let mut url = String::new();
         url.push_str(CLOUD_FLARE_API);
         url.push_str(cmd.as_str());
-        let client = reqwest::Client::new();
-        // 组装header
-        let mut headers = HeaderMap::new();
-        headers.insert("Content-Type", "application/json".parse().unwrap());
-        headers.insert("X-Auth-Email", self.email.parse().unwrap());
-        headers.insert("X-Auth-Key", self.apikey.parse().unwrap());
-        // 发起post请求并返回
-        Ok(client
-            .post(url.as_str())
-            .headers(headers)
-            .json(&params)
-            .send()
-            .await?
-            .json::<HashMap<String, Value>>()
-            .await?)
+
+        Ok(minreq::post(url)
+        .with_header("Content-Type", "application/json")
+        .with_header("X-Auth-Email", self.email.as_str())
+        .with_header("X-Auth-Key", self.apikey.as_str())
+        .with_json(&params)?
+        .send()?
+        .json::<HashMap<String, Value>>()?)
     }
 
-    /*同步请求*/
-    fn post(
-        &self,
-        cmd: String,
-        params: HashMap<String, Value>,
-    ) -> Result<HashMap<String, Value>, reqwest::Error> {
-        let mut url = String::new();
-        url.push_str(CLOUD_FLARE_API);
-        url.push_str(cmd.as_str());
-        let client = reqwest::blocking::Client::new();
-        // 组装header
-        let mut headers = HeaderMap::new();
-        headers.insert("Content-Type", "application/json".parse().unwrap());
-        headers.insert("X-Auth-Email", self.email.parse().unwrap());
-        headers.insert("X-Auth-Key", self.apikey.parse().unwrap());
-        Ok(client
-            .post(url.as_str())
-            .headers(headers)
-            .json(&params)
-            .send()?
-            .json::<HashMap<String, Value>>()?)
-    }
+    
 
     /*同步请求*/
-    fn get(&self, cmd: String) -> Result<HashMap<String, Value>, reqwest::Error> {
+    fn getv1(&self, cmd: String)-> Result<HashMap<String, Value>, minreq::Error>{
         let mut url = String::new();
         url.push_str(CLOUD_FLARE_API);
         url.push_str(cmd.as_str());
-        let client = reqwest::blocking::Client::new();
-        // 组装header
-        let mut headers = HeaderMap::new();
-        headers.insert("Content-Type", "application/json".parse().unwrap());
-        headers.insert("X-Auth-Email", self.email.parse().unwrap());
-        headers.insert("X-Auth-Key", self.apikey.parse().unwrap());
-        Ok(client
-            .get(url.as_str())
-            .headers(headers)
-            .send()?
-            .json::<HashMap<String, Value>>()?)
+ 
+        Ok(minreq::get(url)
+        .with_header("Content-Type", "application/json")
+        .with_header("X-Auth-Email", self.email.as_str())
+        .with_header("X-Auth-Key", self.apikey.as_str())
+        .send()?.json::<HashMap<String, Value>>()?)
+
     }
 
     /*获取请求记录*/
@@ -93,7 +63,7 @@ impl CloudFlare {
         cmd.push_str(self.zoneid.as_str());
         cmd.push_str("/dns_records?name=");
         cmd.push_str(domain.as_str());
-        let result = self.get(cmd);
+        let result = self.getv1(cmd);
         match result {
             Ok(data) => {
                 println!("v:{:?}", data);
@@ -148,7 +118,7 @@ impl CloudFlare {
             cmd.push_str("/");
             cmd.push_str(domainid.as_str());
         }
-        let result = self.post(cmd, params);
+        let result = self.postv1(cmd, params);
         match result {
             Ok(data) => match data.get("success") {
                 Some(v1) => {

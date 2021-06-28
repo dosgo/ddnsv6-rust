@@ -7,11 +7,11 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-reqwest = { version = "0.11.4", default-features = false,features = ["blocking","json"] }
 serde_json = { version = "1.0.59", default-features = false}
 get_if_addrs = {version="0.5.3",default-features = false}
 cidr-utils={version="0.5.4",default-features = false}
 trust-dns-resolver = {version="0.20.3"}
+minreq = { version = "2.4.2", features = ["https-native","json-using-serde"] }
 structopt = "0.3"
 [profile.release]
 lto = true

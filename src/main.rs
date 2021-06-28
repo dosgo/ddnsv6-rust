@@ -40,7 +40,7 @@ struct Opt {
 
 fn main() {
     let opt = Opt::from_args();
-    println!("ddnsv6 v1.1");
+    println!("ddnsv6 v1.2");
     println!("param:{:#?}", opt);
 
     if opt.domain == "" {
